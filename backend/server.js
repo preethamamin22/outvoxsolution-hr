@@ -458,6 +458,13 @@ async function seedDatabase() {
   }
 }
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// Only listen to port if not running on Vercel
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    seedDatabase();
+  });
+}
+
+// Export the Express app for Vercel Serverless Functions
+export default app;

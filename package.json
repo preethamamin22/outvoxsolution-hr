@@ -5,11 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "cd backend && npm install --include=dev && npx prisma generate && cd .. && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node backend/server.js",
-    "render-build": "npm install --include=dev && npm run build && cd backend && npm install --include=dev && npx prisma db push"
+    "start": "node backend/server.js"
   },
   "dependencies": {
     "lucide-react": "^0.435.0",
