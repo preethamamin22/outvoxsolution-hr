@@ -1,9 +1,9 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, User, Calendar, CheckSquare, LogOut, Briefcase, PhoneCall } from 'lucide-react';
+import { LayoutDashboard, Users, User, Calendar, CheckSquare, LogOut, Briefcase, PhoneCall, X } from 'lucide-react';
 import './Sidebar.css';
 
-function Sidebar() {
+function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -16,12 +16,15 @@ function Sidebar() {
   };
 
   return (
-    <aside className="sidebar glass-panel">
+    <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div className="logo-container">
           <div className="logo-icon">OS</div>
           <h2 className="logo-text">Outvox<span className="text-gradient">HR</span></h2>
         </div>
+        <button className="mobile-close-btn" onClick={onClose}>
+          <X size={24} />
+        </button>
       </div>
       
       <nav className="sidebar-nav">

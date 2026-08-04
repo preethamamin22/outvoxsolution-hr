@@ -1,10 +1,13 @@
-import { Bell, Search, Moon, Sun, MessageSquare } from 'lucide-react';
+import { Bell, Search, Moon, Sun, MessageSquare, Menu } from 'lucide-react';
 import './TopBar.css';
 
-function TopBar() {
+function TopBar({ onMenuClick }) {
   return (
     <header className="topbar glass-panel">
       <div className="search-container">
+        <button className="mobile-menu-btn" onClick={onMenuClick}>
+          <Menu size={24} />
+        </button>
         <Search className="search-icon" size={20} />
         <input 
           type="text" 
