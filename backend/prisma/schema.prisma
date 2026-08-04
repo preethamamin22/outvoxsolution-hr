@@ -28,6 +28,9 @@ model Employee {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   tasks        Task[]
+  attendance   AttendanceRecord[]
+  dailyUpdates DailyUpdate[]
+  leads        Lead[]
 }
 
 model Task {
@@ -48,4 +51,45 @@ model Attendance {
   date      DateTime
   present   Int
   absent    Int
+}
+
+model AttendanceRecord {
+  id          Int       @id @default(autoincrement())
+  employeeId  Int
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  date        DateTime  @default(now())
+  clockIn     DateTime?
+  clockOut    DateTime?
+  status      String    @default("Present") // "Present", "Late", "Absent"
+}
+
+model OfferLetter {
+  id             Int      @id @default(autoincrement())
+  candidateName  String
+  candidateEmail String
+  role           String
+  salary         String
+  status         String   @default("Sent") // "Sent", "Accepted", "Rejected"
+  sentAt         DateTime @default(now())
+}
+
+model DailyUpdate {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  content     String
+  date        DateTime @default(now())
+}
+
+model Lead {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phone       String
+  email       String?
+  status      String   @default("New") // "New", "Interested", "Follow-up", "Not Interested"
+  notes       String?
+  assignedTo  Int
+  employee    Employee @relation(fields: [assignedTo], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

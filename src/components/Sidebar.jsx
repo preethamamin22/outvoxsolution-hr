@@ -1,33 +1,20 @@
-import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, CalendarDays, CalendarCheck, 
-  UserPlus, FileText, Building2, TrendingUp, Briefcase, 
-  MonitorSmartphone, Megaphone, Folder, GraduationCap, 
-  CheckSquare, Calendar, PieChart, Settings, LogOut 
-} from 'lucide-react';
+import React from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Users, User, Calendar, CheckSquare, LogOut, Briefcase, PhoneCall } from 'lucide-react';
 import './Sidebar.css';
 
-const navItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/employees', icon: Users, label: 'Employees' },
-  { path: '/attendance', icon: CalendarDays, label: 'Attendance' },
-  { path: '/leave', icon: CalendarCheck, label: 'Leave Management' },
-  { path: '/recruitment', icon: UserPlus, label: 'Recruitment' },
-  { path: '/payroll', icon: FileText, label: 'Payroll' },
-  { path: '/departments', icon: Building2, label: 'Departments' },
-  { path: '/performance', icon: TrendingUp, label: 'Performance' },
-  { path: '/projects', icon: Briefcase, label: 'Projects' },
-  { path: '/assets', icon: MonitorSmartphone, label: 'Assets' },
-  { path: '/announcements', icon: Megaphone, label: 'Announcements' },
-  { path: '/documents', icon: Folder, label: 'Documents' },
-  { path: '/training', icon: GraduationCap, label: 'Training' },
-  { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
-  { path: '/calendar', icon: Calendar, label: 'Calendar' },
-  { path: '/reports', icon: PieChart, label: 'Reports' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
-];
-
 function Sidebar() {
+  const navigate = useNavigate();
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isAgent = user?.role === 'AGENT';
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   return (
     <aside className="sidebar glass-panel">
       <div className="sidebar-header">
@@ -37,24 +24,49 @@ function Sidebar() {
         </div>
       </div>
       
-      <div className="sidebar-nav">
-        {navItems.map((item) => (
-          <NavLink 
-            key={item.path} 
-            to={item.path} 
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          >
-            <item.icon size={20} className="nav-icon" />
-            <span className="nav-label">{item.label}</span>
+      <nav className="sidebar-nav">
+        {!isAgent && (
+          <>
+            <NavLink to="/dashboard" className="nav-item">
+              <LayoutDashboard size={20} />
+              <span>Dashboard</span>
+            </NavLink>
+            <NavLink to="/employees" className="nav-item">
+              <Users size={20} />
+              <span>Employees</span>
+            </NavLink>
+            <NavLink to="/telecallers" className="nav-item">
+              <PhoneCall size={20} />
+              <span>Telecallers</span>
+            </NavLink>
+            <NavLink to="/tasks" className="nav-item">
+              <CheckSquare size={20} />
+              <span>Tasks</span>
+            </NavLink>
+            <NavLink to="/attendance" className="nav-item">
+              <Calendar size={20} />
+              <span>Attendance</span>
+            </NavLink>
+            <NavLink to="/recruitment" className="nav-item">
+              <Briefcase size={20} />
+              <span>Recruitment</span>
+            </NavLink>
+          </>
+        )}
+
+        {isAgent && (
+          <NavLink to="/my-profile" className="nav-item">
+            <User size={20} />
+            <span>My Profile</span>
           </NavLink>
-        ))}
-      </div>
+        )}
+      </nav>
       
       <div className="sidebar-footer">
-        <NavLink to="/login" className="nav-item logout-btn">
+        <button onClick={handleLogout} className="nav-item logout-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
           <LogOut size={20} className="nav-icon text-danger" />
           <span className="nav-label">Logout</span>
-        </NavLink>
+        </button>
       </div>
     </aside>
   );

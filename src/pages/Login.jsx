@@ -5,7 +5,7 @@ import './Login.css';
 
 function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(''); // using 'email' state for username
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,11 @@ function Login() {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/dashboard');
+        if (data.user.role === 'AGENT') {
+          navigate('/my-profile');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setError(data.error || 'Login failed');
       }
@@ -57,8 +61,8 @@ function Login() {
           <div className="input-group">
             <Mail className="input-icon" size={20} />
             <input 
-              type="email" 
-              placeholder="Email Address" 
+              type="text" 
+              placeholder="Username" 
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
