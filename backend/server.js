@@ -372,7 +372,8 @@ app.get('/api/agent/:id', async (req, res) => {
       where: { id: agentId },
       include: {
         tasks: { orderBy: { createdAt: 'desc' } },
-        dailyUpdates: { orderBy: { date: 'desc' }, take: 10 }
+        dailyUpdates: { orderBy: { date: 'desc' }, take: 10 },
+        attendance: { orderBy: { date: 'desc' }, take: 1 }
       }
     });
     res.json(agent);
