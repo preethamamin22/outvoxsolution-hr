@@ -442,7 +442,11 @@ app.get('*', (req, res) => {
 });
 
 async function seedDatabase() {
-  const depts = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
+  try {
+    const count = await prisma.employee.count();
+    if (count > 0) return; // Skip seeding if data already exists
+    
+    const depts = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
   for(let i = 1; i <= 150; i++) {
     await prisma.employee.create({
       data: {
@@ -455,6 +459,9 @@ async function seedDatabase() {
         status: 'Active'
       }
     });
+  }
+  } catch (err) {
+    console.error("Seeding error:", err);
   }
 }
 
