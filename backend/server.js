@@ -17,8 +17,8 @@ const JWT_SECRET = 'outvox-super-secret-key';
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the React frontend dist folder
-app.use(express.static(path.join(__dirname, '../dist')));
+// Serve static files from the React frontend build folder
+app.use(express.static(path.join(__dirname, '../build')));
 
 // Root route to prevent "Cannot GET /"
 app.get('/', (req, res) => {
@@ -438,7 +438,7 @@ app.put('/api/leads/:id', async (req, res) => {
 
 // Fallback to React index.html for all non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  res.sendFile(path.join(__dirname, '../build/index.html'));
 });
 
 async function seedDatabase() {
