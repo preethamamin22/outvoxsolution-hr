@@ -458,10 +458,10 @@ async function seedDatabase() {
   }
 }
 
-// Only listen to port if not running on Vercel
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Only listen to port if not running on Vercel Serverless
+if (!process.env.VERCEL) {
+  app.listen(process.env.PORT || PORT, () => {
+    console.log(`Server is running on port ${process.env.PORT || PORT}`);
     seedDatabase();
   });
 }
