@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "chmod +x node_modules/.bin/vite && vite build",
     "postinstall": "cd backend && npm install --include=dev && chmod +x node_modules/.bin/prisma && npx prisma generate",
     "lint": "eslint .",
     "preview": "vite preview",
