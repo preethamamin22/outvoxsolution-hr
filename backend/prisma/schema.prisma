@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("HR") // "HR", "ADMIN", "EMPLOYEE"
+  createdAt DateTime @default(now())
+}
+
+model Employee {
+  id           Int      @id @default(autoincrement())
+  empId        String   @unique // e.g., "EMP001"
+  fullName     String
+  email        String   @unique
+  department   String
+  designation  String
+  status       String   @default("Active") // "Active", "On Leave", "Terminated"
+  joiningDate  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tasks        Task[]
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  status      String   @default("Pending") // "Pending", "In Progress", "Completed"
+  priority    String   @default("Medium") // "Low", "Medium", "High"
+  dueDate     DateTime?
+  assigneeId  Int
+  assignee    Employee @relation(fields: [assigneeId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  present   Int
+  absent    Int
+}
