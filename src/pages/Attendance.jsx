@@ -14,8 +14,8 @@ function Attendance() {
   const fetchData = async () => {
     try {
       const [empRes, attRes] = await Promise.all([
-        fetch('http://localhost:5000/api/employees'),
-        fetch('http://localhost:5000/api/attendance')
+        fetch('/api/employees'),
+        fetch('/api/attendance')
       ]);
       const empData = await empRes.json();
       const attData = await attRes.json();
@@ -31,7 +31,7 @@ function Attendance() {
 
   const handleClockIn = async (employeeId) => {
     try {
-      const res = await fetch('http://localhost:5000/api/attendance/clock-in', {
+      const res = await fetch('/api/attendance/clock-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ employeeId })
@@ -47,7 +47,7 @@ function Attendance() {
 
   const handleClockOut = async (recordId) => {
     try {
-      const res = await fetch('http://localhost:5000/api/attendance/clock-out', {
+      const res = await fetch('/api/attendance/clock-out', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recordId })

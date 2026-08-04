@@ -18,8 +18,8 @@ function Tasks() {
   const fetchData = async () => {
     try {
       const [tasksRes, empRes] = await Promise.all([
-        fetch('http://localhost:5000/api/tasks'),
-        fetch('http://localhost:5000/api/employees')
+        fetch('/api/tasks'),
+        fetch('/api/employees')
       ]);
       const tasksData = await tasksRes.json();
       const empData = await empRes.json();
@@ -36,7 +36,7 @@ function Tasks() {
   const handleCreateTask = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/tasks', {
+      const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

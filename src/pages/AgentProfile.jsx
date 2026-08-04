@@ -20,7 +20,7 @@ function AgentProfile() {
 
   const fetchProfile = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/agent/${id}`);
+      const res = await fetch(`/api/agent/${id}`);
       const data = await res.json();
       if (res.ok) {
         setProfile(data);
@@ -40,7 +40,7 @@ function AgentProfile() {
     setIsSubmitting(true);
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      const res = await fetch(`http://localhost:5000/api/agent/${user.id}/update`, {
+      const res = await fetch(`/api/agent/${user.id}/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: updateContent })

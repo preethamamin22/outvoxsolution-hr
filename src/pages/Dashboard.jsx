@@ -35,8 +35,8 @@ function Dashboard() {
     const fetchData = async () => {
       try {
         const [kpiRes, chartsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/dashboard/kpis'),
-          fetch('http://localhost:5000/api/dashboard/charts')
+          fetch('/api/dashboard/kpis'),
+          fetch('/api/dashboard/charts')
         ]);
         
         const kpiData = await kpiRes.json();

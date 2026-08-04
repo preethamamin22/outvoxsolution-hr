@@ -15,8 +15,8 @@ function Telecallers() {
   const fetchData = async () => {
     try {
       const [leadsRes, empRes] = await Promise.all([
-        fetch('http://localhost:5000/api/leads'),
-        fetch('http://localhost:5000/api/employees')
+        fetch('/api/leads'),
+        fetch('/api/employees')
       ]);
       const leadsData = await leadsRes.json();
       const empData = await empRes.json();
@@ -35,7 +35,7 @@ function Telecallers() {
   const handleAddLead = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/leads', {
+      const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -53,7 +53,7 @@ function Telecallers() {
 
   const updateLeadStatus = async (id, status) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/leads/${id}`, {
+      const res = await fetch(`/api/leads/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })

@@ -15,7 +15,7 @@ function Recruitment() {
 
   const fetchOffers = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/recruitment/offers');
+      const res = await fetch('/api/recruitment/offers');
       const data = await res.json();
       setOffers(data);
     } catch (error) {
@@ -28,7 +28,7 @@ function Recruitment() {
     setIsSending(true);
     setSuccessMsg(null);
     try {
-      const res = await fetch('http://localhost:5000/api/recruitment/send-offer', {
+      const res = await fetch('/api/recruitment/send-offer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
