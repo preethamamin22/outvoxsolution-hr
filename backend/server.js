@@ -381,6 +381,20 @@ app.get('/api/agent/:id', async (req, res) => {
   }
 });
 
+app.put('/api/agent/:id', async (req, res) => {
+  try {
+    const { fullName, email } = req.body;
+    const agentId = parseInt(req.params.id);
+    const updatedAgent = await prisma.employee.update({
+      where: { id: agentId },
+      data: { fullName, email }
+    });
+    res.json(updatedAgent);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 app.post('/api/agent/:id/update', async (req, res) => {
   try {
     const { content } = req.body;

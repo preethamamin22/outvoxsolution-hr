@@ -8,6 +8,10 @@ function AgentProfile() {
   const [loading, setLoading] = useState(true);
   const [updateContent, setUpdateContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ fullName: '', email: '' });
+  const [isClockedIn, setIsClockedIn] = useState(false);
+  const [attendanceId, setAttendanceId] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -24,6 +28,15 @@ function AgentProfile() {
       const data = await res.json();
       if (res.ok) {
         setProfile(data);
+        setEditForm({ fullName: data.fullName, email: data.email });
+        
+        // Check if there is an active attendance record for today without a clock out
+        const todayStr = new Date().toDateString();
+        const activeRecord = data.attendance?.find(a => new Date(a.date).toDateString() === todayStr && !a.clockOut);
+        if (activeRecord) {
+          setIsClockedIn(true);
+          setAttendanceId(activeRecord.id);
+        }
       } else {
         setProfile(null);
       }
@@ -60,17 +73,102 @@ function AgentProfile() {
     }
   };
 
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const res = await fetch(`/api/agent/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      });
+      if (res.ok) {
+        const updatedAgent = await res.json();
+        setProfile({ ...profile, fullName: updatedAgent.fullName, email: updatedAgent.email });
+        setIsEditing(false);
+        // update local storage name
+        user.name = updatedAgent.fullName;
+        user.username = updatedAgent.email;
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+    } catch (error) {
+      console.error('Failed to update profile', error);
+    }
+  };
+
+  const handleClockIn = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const res = await fetch('/api/attendance/clock-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId: user.id })
+      });
+      if (res.ok) {
+        const record = await res.json();
+        setIsClockedIn(true);
+        setAttendanceId(record.id);
+      }
+    } catch (error) {
+      console.error('Clock-in failed', error);
+    }
+  };
+
+  const handleClockOut = async () => {
+    if (!attendanceId) return;
+    try {
+      const res = await fetch('/api/attendance/clock-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordId: attendanceId })
+      });
+      if (res.ok) {
+        setIsClockedIn(false);
+        setAttendanceId(null);
+      }
+    } catch (error) {
+      console.error('Clock-out failed', error);
+    }
+  };
+
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading your profile...</div>;
   if (!profile) return <div style={{ padding: '2rem', textAlign: 'center' }}>Error loading profile.</div>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '2rem' }}>
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2>Welcome, {profile.fullName}</h2>
           <p className="text-muted">Agent Portal - {profile.department} | {profile.designation}</p>
         </div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {isClockedIn ? (
+            <button className="btn btn-danger" onClick={handleClockOut} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px' }}>Clock Out</button>
+          ) : (
+            <button className="btn btn-success" onClick={handleClockIn} style={{ background: 'var(--success)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px' }}>Clock In</button>
+          )}
+          <button className="btn btn-outline" onClick={() => setIsEditing(!isEditing)}>
+            {isEditing ? 'Cancel' : 'Edit Profile'}
+          </button>
+        </div>
       </div>
+
+      {isEditing && (
+        <div className="glass-card" style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem' }}>Edit Profile</h3>
+          <form onSubmit={handleUpdateProfile} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Full Name</label>
+              <input type="text" value={editForm.fullName} onChange={e => setEditForm({...editForm, fullName: e.target.value})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '0.75rem', color: 'var(--text-main)', borderRadius: '4px' }} required />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Email Address</label>
+              <input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '0.75rem', color: 'var(--text-main)', borderRadius: '4px' }} required />
+            </div>
+            <button type="submit" className="btn btn-primary">Save Changes</button>
+          </form>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '2rem' }}>
         
