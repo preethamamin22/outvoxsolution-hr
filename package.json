@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node backend/server.js",
-    "render-build": "npm install --include=dev && npm run build && cd backend && npm install && npx prisma db push"
+    "render-build": "npm install --include=dev && npm run build && cd backend && npm install --include=dev && npx prisma db push"
   },
   "dependencies": {
     "lucide-react": "^0.435.0",
