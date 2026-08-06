@@ -6,18 +6,14 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js",
-    "postinstall": "chmod +x node_modules/.bin/prisma && npx prisma generate",
-    "db:push": "chmod +x node_modules/.bin/prisma && npx prisma db push"
+    "dev": "node --watch server.js"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.14"
-  },
-  "devDependencies": {
+    "nodemailer": "^6.9.14",
     "prisma": "^5.19.0"
   }
 }

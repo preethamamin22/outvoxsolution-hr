@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, CheckCircle2, Clock, MessageSquare } from 'lucide-react';
+import { CheckCircle2, Clock, MessageSquare, LogIn, LogOut, Edit2, X, Save, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import './AgentProfile.css';
 
 function AgentProfile() {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ function AgentProfile() {
   const [editForm, setEditForm] = useState({ fullName: '', email: '' });
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [attendanceId, setAttendanceId] = useState(null);
+  const [clockLoading, setClockLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('updates'); // 'updates' | 'tasks'
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -29,16 +32,12 @@ function AgentProfile() {
       if (res.ok) {
         setProfile(data);
         setEditForm({ fullName: data.fullName, email: data.email });
-        
-        // Check if there is an active attendance record for today without a clock out
         const todayStr = new Date().toDateString();
         const activeRecord = data.attendance?.find(a => new Date(a.date).toDateString() === todayStr && !a.clockOut);
         if (activeRecord) {
           setIsClockedIn(true);
           setAttendanceId(activeRecord.id);
         }
-      } else {
-        setProfile(null);
       }
     } catch (error) {
       console.error('Failed to fetch profile', error);
@@ -60,10 +59,7 @@ function AgentProfile() {
       });
       if (res.ok) {
         const newUpdate = await res.json();
-        setProfile({
-          ...profile,
-          dailyUpdates: [newUpdate, ...(profile.dailyUpdates || [])]
-        });
+        setProfile({ ...profile, dailyUpdates: [newUpdate, ...(profile.dailyUpdates || [])] });
         setUpdateContent('');
       }
     } catch (error) {
@@ -86,7 +82,6 @@ function AgentProfile() {
         const updatedAgent = await res.json();
         setProfile({ ...profile, fullName: updatedAgent.fullName, email: updatedAgent.email });
         setIsEditing(false);
-        // update local storage name
         user.name = updatedAgent.fullName;
         user.username = updatedAgent.email;
         localStorage.setItem('user', JSON.stringify(user));
@@ -97,6 +92,7 @@ function AgentProfile() {
   };
 
   const handleClockIn = async () => {
+    setClockLoading(true);
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       const res = await fetch('/api/attendance/clock-in', {
@@ -111,11 +107,14 @@ function AgentProfile() {
       }
     } catch (error) {
       console.error('Clock-in failed', error);
+    } finally {
+      setClockLoading(false);
     }
   };
 
   const handleClockOut = async () => {
     if (!attendanceId) return;
+    setClockLoading(true);
     try {
       const res = await fetch('/api/attendance/clock-out', {
         method: 'POST',
@@ -128,118 +127,189 @@ function AgentProfile() {
       }
     } catch (error) {
       console.error('Clock-out failed', error);
+    } finally {
+      setClockLoading(false);
     }
   };
 
-  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading your profile...</div>;
-  if (!profile) return <div style={{ padding: '2rem', textAlign: 'center' }}>Error loading profile.</div>;
+  if (loading) return (
+    <div className="agent-loading">
+      <div className="agent-spinner" />
+      <p>Loading your profile...</p>
+    </div>
+  );
+
+  if (!profile) return (
+    <div className="agent-loading">
+      <p style={{ color: 'var(--danger)' }}>Error loading profile. Please try again.</p>
+    </div>
+  );
+
+  const initials = profile.fullName?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AG';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '2rem' }}>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2>Welcome, {profile.fullName}</h2>
-          <p className="text-muted">Agent Portal - {profile.department} | {profile.designation}</p>
+    <div className="agent-page">
+
+      {/* Hero Profile Card */}
+      <div className="agent-hero glass-card">
+        <div className="agent-hero-left">
+          <div className="agent-avatar">{initials}</div>
+          <div className="agent-info">
+            <h2 className="agent-name">{profile.fullName}</h2>
+            <p className="agent-dept">{profile.designation} &bull; {profile.department}</p>
+            <p className="agent-email">{profile.email}</p>
+            <span className={`agent-status-badge ${profile.status === 'Active' ? 'active' : 'inactive'}`}>
+              {profile.status}
+            </span>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          {isClockedIn ? (
-            <button className="btn btn-danger" onClick={handleClockOut} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px' }}>Clock Out</button>
-          ) : (
-            <button className="btn btn-success" onClick={handleClockIn} style={{ background: 'var(--success)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px' }}>Clock In</button>
-          )}
-          <button className="btn btn-outline" onClick={() => setIsEditing(!isEditing)}>
-            {isEditing ? 'Cancel' : 'Edit Profile'}
+        <div className="agent-hero-actions">
+          <button
+            className={`clock-btn ${isClockedIn ? 'clocked-in' : 'clocked-out'}`}
+            onClick={isClockedIn ? handleClockOut : handleClockIn}
+            disabled={clockLoading}
+          >
+            {clockLoading ? (
+              <span className="agent-spinner small" />
+            ) : isClockedIn ? (
+              <><LogOut size={20} /> Clock Out</>
+            ) : (
+              <><LogIn size={20} /> Clock In</>
+            )}
+          </button>
+          <button className="edit-btn" onClick={() => setIsEditing(!isEditing)}>
+            {isEditing ? <><X size={16} /> Cancel</> : <><Edit2 size={16} /> Edit</>}
           </button>
         </div>
       </div>
 
+      {/* Edit Profile Form */}
       {isEditing && (
-        <div className="glass-card" style={{ padding: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>Edit Profile</h3>
-          <form onSubmit={handleUpdateProfile} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Full Name</label>
-              <input type="text" value={editForm.fullName} onChange={e => setEditForm({...editForm, fullName: e.target.value})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '0.75rem', color: 'var(--text-main)', borderRadius: '4px' }} required />
+        <div className="glass-card agent-edit-card">
+          <h3><User size={18} /> Edit Profile</h3>
+          <form onSubmit={handleUpdateProfile} className="agent-edit-form">
+            <div className="agent-form-group">
+              <label>Full Name</label>
+              <input
+                type="text"
+                value={editForm.fullName}
+                onChange={e => setEditForm({ ...editForm, fullName: e.target.value })}
+                required
+              />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Email Address</label>
-              <input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '0.75rem', color: 'var(--text-main)', borderRadius: '4px' }} required />
+            <div className="agent-form-group">
+              <label>Email Address</label>
+              <input
+                type="email"
+                value={editForm.email}
+                onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                required
+              />
             </div>
-            <button type="submit" className="btn btn-primary">Save Changes</button>
+            <button type="submit" className="btn btn-primary save-btn">
+              <Save size={16} /> Save Changes
+            </button>
           </form>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '2rem' }}>
-        
-        {/* Left Column: Updates Form & History */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div className="glass-card" style={{ padding: '2rem' }}>
-            <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <MessageSquare size={20} className="text-primary" /> Submit Daily Update
-            </h3>
-            <form onSubmit={handleSubmitUpdate}>
-              <textarea 
-                rows="4" 
-                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '1rem', color: 'var(--text-main)', borderRadius: '8px', marginBottom: '1rem' }}
-                placeholder="What did you work on today?"
-                value={updateContent}
-                onChange={e => setUpdateContent(e.target.value)}
-                required
-              />
-              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Post Update'}
-              </button>
-            </form>
-          </div>
+      {/* Tab Navigation (mobile-friendly) */}
+      <div className="agent-tabs">
+        <button
+          className={`agent-tab ${activeTab === 'updates' ? 'active' : ''}`}
+          onClick={() => setActiveTab('updates')}
+        >
+          <MessageSquare size={16} /> Daily Updates
+        </button>
+        <button
+          className={`agent-tab ${activeTab === 'tasks' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tasks')}
+        >
+          <CheckCircle2 size={16} /> My Tasks
+          {profile.tasks?.length > 0 && (
+            <span className="tab-badge">{profile.tasks.length}</span>
+          )}
+        </button>
+      </div>
 
-          <div className="glass-card" style={{ padding: '2rem', flex: 1 }}>
-            <h3 style={{ marginBottom: '1.5rem' }}>Recent Updates</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {/* Tab Content */}
+      <div className="agent-tab-content">
+
+        {/* Updates Tab */}
+        {activeTab === 'updates' && (
+          <div className="agent-updates-section">
+            <div className="glass-card agent-update-form-card">
+              <h3><MessageSquare size={18} /> Submit Today's Update</h3>
+              <form onSubmit={handleSubmitUpdate}>
+                <textarea
+                  rows={4}
+                  className="agent-textarea"
+                  placeholder="What did you work on today? How many calls? Any issues?"
+                  value={updateContent}
+                  onChange={e => setUpdateContent(e.target.value)}
+                  required
+                />
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ width: '100%' }}>
+                  {isSubmitting ? 'Posting...' : '📤 Post Update'}
+                </button>
+              </form>
+            </div>
+
+            <div className="glass-card agent-updates-list">
+              <h3>Recent Updates</h3>
               {(!profile.dailyUpdates || profile.dailyUpdates.length === 0) ? (
-                <p className="text-muted">No updates submitted yet.</p>
+                <p className="agent-empty">No updates submitted yet. Add your first one above!</p>
               ) : (
-                profile.dailyUpdates.map(update => (
-                  <div key={update.id} style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                    <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>{update.content}</p>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Clock size={12}/> {new Date(update.date).toLocaleString()}
-                    </span>
-                  </div>
-                ))
+                <div className="updates-feed">
+                  {profile.dailyUpdates.map(update => (
+                    <div key={update.id} className="update-item">
+                      <p className="update-content">{update.content}</p>
+                      <span className="update-time">
+                        <Clock size={12} /> {new Date(update.date).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Right Column: Assigned Tasks */}
-        <div className="glass-card" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <CheckCircle2 size={20} className="text-primary" /> My Assigned Tasks
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', flex: 1 }}>
+        {/* Tasks Tab */}
+        {activeTab === 'tasks' && (
+          <div className="glass-card agent-tasks-list">
+            <h3><CheckCircle2 size={18} /> My Assigned Tasks</h3>
             {(!profile.tasks || profile.tasks.length === 0) ? (
-              <p className="text-muted" style={{ textAlign: 'center', marginTop: '2rem' }}>You have no assigned tasks.</p>
+              <p className="agent-empty">No tasks assigned yet. Check back soon!</p>
             ) : (
-              profile.tasks.map(task => (
-                <div key={task.id} style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', borderLeft: `4px solid ${task.priority === 'High' ? 'var(--danger)' : task.priority === 'Medium' ? 'var(--warning)' : 'var(--success)'}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <strong style={{ fontSize: '1.05rem' }}>{task.title}</strong>
-                    <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem', borderRadius: '12px', background: 'rgba(255,255,255,0.1)' }}>{task.status}</span>
+              <div className="tasks-feed">
+                {profile.tasks.map(task => (
+                  <div
+                    key={task.id}
+                    className="task-item"
+                    style={{ borderLeftColor: task.priority === 'High' ? 'var(--danger)' : task.priority === 'Medium' ? 'var(--warning)' : 'var(--success)' }}
+                  >
+                    <div className="task-header">
+                      <strong className="task-title">{task.title}</strong>
+                      <span className={`task-status ${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</span>
+                    </div>
+                    {task.description && <p className="task-desc">{task.description}</p>}
+                    <div className="task-meta">
+                      <span className={`task-priority priority-${task.priority?.toLowerCase()}`}>{task.priority}</span>
+                      {task.dueDate && (
+                        <span className="task-due">
+                          <Clock size={12} /> Due: {new Date(task.dueDate).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{task.description}</p>
-                  {task.dueDate && (
-                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                       <Clock size={14}/> Due: {new Date(task.dueDate).toLocaleDateString()}
-                     </p>
-                  )}
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
-        </div>
-
+        )}
       </div>
+
     </div>
   );
 }

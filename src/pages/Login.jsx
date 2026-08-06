@@ -51,7 +51,7 @@ function Login() {
       
       <div className="login-card glass-card">
         <div className="login-header">
-          <div className="logo-icon-large">OS</div>
+          <img src="/logo.jpg" alt="Outvox Logo" className="logo-icon-large" style={{ objectFit: 'cover' }} />
           <h2>Welcome Back</h2>
           <p>Sign in to OutvoxHR Dashboard</p>
         </div>

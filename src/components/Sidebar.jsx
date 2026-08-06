@@ -19,7 +19,7 @@ function Sidebar({ isOpen, onClose }) {
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div className="logo-container">
-          <div className="logo-icon">OS</div>
+          <img src="/logo.jpg" alt="Outvox Logo" className="logo-icon" style={{ objectFit: 'cover' }} />
           <h2 className="logo-text">Outvox<span className="text-gradient">HR</span></h2>
         </div>
         <button className="mobile-close-btn" onClick={onClose}>

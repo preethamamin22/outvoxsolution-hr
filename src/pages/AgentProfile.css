@@ -1,0 +1,555 @@
+/* ===== Agent Profile Page ===== */
+
+.agent-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Loading State */
+.agent-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+}
+
+.agent-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(79, 70, 229, 0.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.agent-spinner.small {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Hero Card ===== */
+.agent-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.agent-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+}
+
+.agent-info {
+  min-width: 0;
+}
+
+.agent-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-dept {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 0.2rem;
+}
+
+.agent-email {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.agent-status-badge.active {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.agent-status-badge.inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ===== Hero Action Buttons ===== */
+.agent-hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.clock-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  min-width: 130px;
+  justify-content: center;
+}
+
+.clock-btn.clocked-out {
+  background: linear-gradient(135deg, var(--success), #16a34a);
+  color: white;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4);
+}
+
+.clock-btn.clocked-out:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
+}
+
+.clock-btn.clocked-in {
+  background: linear-gradient(135deg, var(--danger), #dc2626);
+  color: white;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+
+.clock-btn.clocked-in:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.clock-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass-strong);
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Edit Profile Form ===== */
+.agent-edit-card {
+  padding: 1.5rem;
+}
+
+.agent-edit-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+}
+
+.agent-edit-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.agent-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.agent-form-group label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.agent-form-group input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-glass-strong);
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.agent-form-group input:focus {
+  border-color: var(--primary);
+}
+
+.save-btn {
+  white-space: nowrap;
+}
+
+/* ===== Tab Navigation ===== */
+.agent-tabs {
+  display: flex;
+  gap: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 0.3rem;
+  overflow: hidden;
+}
+
+.agent-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.agent-tab.active {
+  background: linear-gradient(135deg, var(--primary), #6366f1);
+  color: white;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+.tab-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+}
+
+.agent-tab:not(.active) .tab-badge {
+  background: rgba(79, 70, 229, 0.2);
+  color: var(--primary);
+}
+
+/* ===== Tab Content ===== */
+.agent-tab-content {
+  flex: 1;
+}
+
+/* Updates Section */
+.agent-updates-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.agent-update-form-card {
+  padding: 1.5rem;
+}
+
+.agent-update-form-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.agent-textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-glass-strong);
+  padding: 0.9rem;
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.2s;
+  min-height: 100px;
+}
+
+.agent-textarea:focus {
+  border-color: var(--primary);
+}
+
+.agent-updates-list {
+  padding: 1.5rem;
+}
+
+.agent-updates-list h3 {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.agent-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem 0;
+  font-size: 0.9rem;
+}
+
+.updates-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.update-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  transition: border-color 0.2s;
+}
+
+.update-item:hover {
+  border-color: var(--border-glass-strong);
+}
+
+.update-content {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.update-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Tasks Section */
+.agent-tasks-list {
+  padding: 1.5rem;
+}
+
+.agent-tasks-list h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.tasks-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-item {
+  padding: 1.1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  border-left: 4px solid;
+  transition: all 0.2s;
+}
+
+.task-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.task-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.task-status {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.task-status.completed { background: rgba(34,197,94,0.15); color: var(--success); }
+.task-status.in-progress { background: rgba(79,70,229,0.15); color: #818cf8; }
+.task-status.pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+
+.task-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.3rem 0 0.6rem;
+  line-height: 1.5;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.task-priority {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+}
+
+.priority-high { background: rgba(239,68,68,0.15); color: var(--danger); }
+.priority-medium { background: rgba(245,158,11,0.15); color: var(--warning); }
+.priority-low { background: rgba(34,197,94,0.15); color: var(--success); }
+
+.task-due {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .agent-page {
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+  }
+
+  /* Hero card stacks vertically on mobile */
+  .agent-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+
+  .agent-hero-left {
+    width: 100%;
+  }
+
+  .agent-avatar {
+    width: 54px;
+    height: 54px;
+    font-size: 1.25rem;
+  }
+
+  .agent-name {
+    font-size: 1.1rem;
+  }
+
+  /* Action buttons take full width on mobile */
+  .agent-hero-actions {
+    width: 100%;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .clock-btn {
+    flex: 1;
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+    min-width: unset;
+  }
+
+  .edit-btn {
+    flex-shrink: 0;
+    padding: 0.85rem 1rem;
+  }
+
+  /* Edit form stacks on mobile */
+  .agent-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .save-btn {
+    width: 100%;
+  }
+
+  /* Tab text shorter on small screens */
+  .agent-tab {
+    font-size: 0.82rem;
+    padding: 0.65rem 0.5rem;
+  }
+
+  /* Cards */
+  .agent-update-form-card,
+  .agent-updates-list,
+  .agent-tasks-list {
+    padding: 1.1rem;
+  }
+
+  .task-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
