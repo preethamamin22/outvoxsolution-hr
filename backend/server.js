@@ -11,8 +11,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = 5000;
-const JWT_SECRET = 'outvox-super-secret-key';
+const PORT = process.env.PORT || 5001;
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
 
 app.use(cors());
 app.use(express.json());
@@ -28,33 +28,30 @@ app.get('/', (req, res) => {
 // --- Auth Routes ---
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
-  
-  // Check against the requested admin credentials
+
+  // Hardcoded admin fallback - always works regardless of DB state
   if (email === 'Outvoxsolution' && password === 'Preetham@22') {
-    let user = await prisma.user.findUnique({ where: { email: 'Outvoxsolution' } });
-    
-    // Ensure the admin user exists in DB
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: 'Outvoxsolution',
-          password: 'hashed-password-placeholder',
-          name: 'Preetham',
-          role: 'ADMIN'
-        }
+    // Upsert admin into DB
+    let admin = await prisma.user.findUnique({ where: { email: 'Outvoxsolution' } });
+    if (!admin) {
+      admin = await prisma.user.create({
+        data: { email: 'Outvoxsolution', password: 'Preetham@22', name: 'Preetham', role: 'ADMIN' }
       });
     }
-
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-    return res.json({ token, user: { name: user.name, username: user.email, role: user.role } });
+    const token = jwt.sign({ userId: admin.id, role: 'ADMIN' }, JWT_SECRET, { expiresIn: '24h' });
+    return res.json({ token, user: { name: admin.name, username: admin.email, role: 'ADMIN' } });
   }
 
-  // Check if it's an Agent logging in with their employee email
-  const employee = await prisma.employee.findUnique({ where: { email } });
-  if (employee) {
-    // For demo purposes, any password works for an existing agent email
-    const token = jwt.sign({ userId: employee.id, role: 'AGENT' }, JWT_SECRET, { expiresIn: '24h' });
-    return res.json({ token, user: { id: employee.id, name: employee.fullName, username: employee.email, role: 'AGENT' } });
+  // Check DB for any user (employees)
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (user && user.password === password) {
+    if (user.role === 'EMPLOYEE') {
+      const employee = await prisma.employee.findUnique({ where: { email } });
+      if (employee) {
+        const token = jwt.sign({ userId: employee.id, role: 'AGENT' }, JWT_SECRET, { expiresIn: '24h' });
+        return res.json({ token, user: { id: employee.id, name: employee.fullName, username: employee.email, role: 'AGENT' } });
+      }
+    }
   }
 
   // Reject any other credentials
@@ -135,6 +132,17 @@ app.post('/api/employees', async (req, res) => {
         designation,
       }
     });
+    
+    // Ensure user login is also created
+    await prisma.user.create({
+      data: {
+        email: email,
+        password: 'Employee@123',
+        name: fullName,
+        role: 'EMPLOYEE'
+      }
+    });
+    
     res.json(newEmployee);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create employee' });
@@ -246,121 +254,102 @@ app.get('/api/recruitment/offers', async (req, res) => {
 app.post('/api/recruitment/send-offer', async (req, res) => {
   try {
     const { candidateName, candidateEmail, role, salary } = req.body;
-    
-    // Create Ethereal test account on the fly for development
-    const testAccount = await nodemailer.createTestAccount();
-    
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass
-      }
-    });
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
 
-    const info = await transporter.sendMail({
-      from: '"Outvox HR" <hr@outvoxsolution.com>',
-      to: candidateEmail,
-      subject: `Offer of Employment: ${role} at Outvox Solution`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; border: 1px solid #0056b3;">
-          
-          <!-- Header Banner -->
-          <div style="background-color: #ff5722; padding: 15px 20px;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">OUTVOX SOLUTION</h1>
+    const offerHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; border: 2px solid #0056b3;">
+        <div style="background: linear-gradient(135deg, #ff5722, #e64a19); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: 2px;">OUTVOX SOLUTION</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 13px; letter-spacing: 1px;">OFFICIAL OFFER LETTER</p>
           </div>
-
-          <div style="padding: 40px; position: relative;">
-            
-            <!-- Logo area -->
-            <div style="text-align: center; margin-bottom: 20px;">
-              <div style="background-color: #000; display: inline-block; padding: 20px; border-radius: 8px;">
-                <h2 style="color: #ff5722; margin: 0;">OUTVOX</h2>
-                <p style="color: #06B6D4; margin: 0; font-size: 12px; letter-spacing: 2px;">SOLUTION</p>
-              </div>
-              <h2 style="color: #0056b3; margin-top: 15px; font-size: 28px;">OFFER LETTER</h2>
-            </div>
-
-            <!-- Date and Details -->
-            <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-            
-            <p style="margin-bottom: 5px;"><strong>To,</strong></p>
-            <p style="margin: 0; font-weight: bold;">${candidateName}</p>
-            <p style="margin: 0;">Email: ${candidateEmail}</p>
-            
-            <p style="margin-top: 20px;"><strong>Subject: Appointment as ${role}</strong></p>
-            
-            <p>Dear <strong>${candidateName}</strong>,</p>
-            
-            <p>We are pleased to offer you an opportunity to join <strong>Outvox Solution</strong> as a <strong>${role}</strong> on a contractual and performance-based engagement.</p>
-            
-            <p><strong>Engagement Details</strong><br/>
-            • Position: ${role}<br/>
-            • Work Mode: Remote / Freelance<br/>
-            • Joining: Immediate<br/>
-            • Reporting To: Operations Team, Outvox Solution</p>
-            
-            <p><strong>Scope of Work</strong><br/>
-            You will contact prospective riders, explain onboarding procedures, assist with registrations, maintain call records, and complete a minimum of <strong>100 outbound calls per day</strong> during active campaigns.</p>
-            
-            <p><strong>Compensation</strong><br/>
-            • Incentive: <strong>${salary}</strong><br/>
-            • Eligibility: Minimum 1 completed login and 10 successful rider orders.</p>
-            
-            <p><strong>Terms & Conditions</strong><br/>
-            1. This is a freelance engagement and shall not be construed as employment.<br/>
-            2. No fixed salary, PF, ESI, gratuity, insurance, or employee benefits are applicable.<br/>
-            3. Incentives are payable only after successful verification of conversions.<br/>
-            4. Confidential company information must not be disclosed to third parties.<br/>
-            5. Daily target of 100 calls is mandatory unless otherwise approved by management.<br/>
-            6. Failure to meet performance standards may affect incentive eligibility and continuation of assignments.<br/>
-            7. Outvox Solution reserves the right to modify project requirements and incentive structures.<br/>
-            8. Either party may terminate this engagement at any time.</p>
-            
-            <p>By accepting this offer, you acknowledge and agree to all terms and conditions stated herein.</p>
-            <p>We look forward to a successful association with you.</p>
-            
-            <br/><br/>
-            <p style="font-style: italic; font-weight: bold;">For Outvox Solution</p>
-            <br/><br/><br/>
-            
-            <p style="margin:0; font-weight: bold;">Prashanth Lobo</p>
-            <p style="margin:0;">Founder</p>
-            <br/>
-            <p style="margin:0;">Authorized Signature: _______________________</p>
-            <p style="margin:0;">Company Seal: _______________________</p>
-            
-            <br/><br/>
-            <p style="font-weight: bold; font-style: italic;">Candidate Acceptance</p>
-            <p>I, <strong>${candidateName}</strong>, accept the terms and conditions of this engagement.</p>
-            <p style="margin:0;">Signature: _______________________</p>
-            <p style="margin:0;">Date: _______________________</p>
-            
-          </div>
-          
-          <!-- Footer Banner -->
-          <div style="background-color: #0056b3; padding: 10px 20px; text-align: center; color: white; font-size: 12px;">
-            Outvox Solution | prashanth@outvoxsolution.com | OutvoxSolution.com
+          <div style="background: white; padding: 8px 16px; border-radius: 6px;">
+            <span style="color: #ff5722; font-weight: bold; font-size: 14px;">OUTVOX</span>
+            <span style="color: #0056b3; font-size: 14px;"> HR</span>
           </div>
         </div>
-      `
-    });
+
+        <div style="padding: 40px 50px; background: white; color: #333;">
+          <p style="text-align: right; color: #666;"><strong>Date:</strong> ${dateStr}</p>
+          <p style="margin-bottom: 4px;"><strong>To,</strong></p>
+          <p style="margin: 0; font-size: 16px; font-weight: bold;">${candidateName}</p>
+          <p style="margin: 4px 0 24px; color: #555;">Email: ${candidateEmail}</p>
+
+          <p style="font-size: 16px; font-weight: bold; border-bottom: 2px solid #ff5722; padding-bottom: 8px; color: #0056b3;">Subject: Appointment as ${role}</p>
+
+          <p>Dear <strong>${candidateName}</strong>,</p>
+          <p>We are pleased to offer you an opportunity to join <strong>Outvox Solution</strong> as a <strong>${role}</strong> on a contractual and performance-based engagement.</p>
+
+          <div style="background: #f8f9fa; border-left: 4px solid #ff5722; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+            <p style="font-weight: bold; margin: 0 0 10px; color: #0056b3;">Engagement Details</p>
+            <p style="margin: 4px 0;">• <strong>Position:</strong> ${role}</p>
+            <p style="margin: 4px 0;">• <strong>Work Mode:</strong> Remote / Freelance</p>
+            <p style="margin: 4px 0;">• <strong>Joining:</strong> Immediate</p>
+            <p style="margin: 4px 0;">• <strong>Reporting To:</strong> Operations Team, Outvox Solution</p>
+          </div>
+
+          <div style="background: #f8f9fa; border-left: 4px solid #0056b3; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+            <p style="font-weight: bold; margin: 0 0 10px; color: #0056b3;">Compensation</p>
+            <p style="margin: 4px 0;">• <strong>Incentive:</strong> ${salary}</p>
+            <p style="margin: 4px 0;">• <strong>Eligibility:</strong> Minimum 1 completed login and 10 successful rider orders.</p>
+          </div>
+
+          <p><strong>Scope of Work</strong><br/>You will contact prospective riders, explain onboarding procedures, assist with registrations, maintain call records, and complete a minimum of <strong>100 outbound calls per day</strong> during active campaigns.</p>
+
+          <div style="border: 1px solid #ddd; padding: 16px 20px; margin: 20px 0; border-radius: 8px;">
+            <p style="font-weight: bold; color: #0056b3; margin-top: 0;">Terms &amp; Conditions</p>
+            <ol style="padding-left: 20px; color: #555; line-height: 1.8;">
+              <li>This is a freelance engagement and shall not be construed as employment.</li>
+              <li>No fixed salary, PF, ESI, gratuity, insurance, or employee benefits are applicable.</li>
+              <li>Incentives are payable only after successful verification of conversions.</li>
+              <li>Confidential company information must not be disclosed to third parties.</li>
+              <li>Daily target of 100 calls is mandatory unless otherwise approved by management.</li>
+              <li>Failure to meet performance standards may affect incentive eligibility.</li>
+              <li>Outvox Solution reserves the right to modify project requirements and incentive structures.</li>
+              <li>Either party may terminate this engagement at any time.</li>
+            </ol>
+          </div>
+
+          <p>By accepting this offer, you acknowledge and agree to all terms and conditions stated herein.</p>
+          <p>We look forward to a successful association with you.</p>
+
+          <div style="display: flex; gap: 40px; margin-top: 50px;">
+            <div style="flex: 1;">
+              <p style="font-weight: bold; color: #0056b3; margin-bottom: 0;">For Outvox Solution</p>
+              <br/><br/><br/>
+              <p style="margin: 0; font-weight: bold;">Prashanth Lobo</p>
+              <p style="margin: 0; color: #666;">Founder</p>
+              <p style="margin: 8px 0 0; border-top: 1px solid #333; padding-top: 4px; color: #888;">Authorized Signature</p>
+            </div>
+            <div style="flex: 1;">
+              <p style="font-weight: bold; color: #0056b3; margin-bottom: 0;">Candidate Acceptance</p>
+              <p style="margin: 4px 0; color: #555;">I, <strong>${candidateName}</strong>, accept the terms and conditions.</p>
+              <br/><br/>
+              <p style="margin: 8px 0 0; border-top: 1px solid #333; padding-top: 4px; color: #888;">Candidate Signature &amp; Date</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: #0056b3; padding: 12px 30px; text-align: center; color: white; font-size: 12px;">
+          Outvox Solution | prashanth@outvoxsolution.com | OutvoxSolution.com
+        </div>
+      </div>
+    `;
 
     // Save to DB
     const offer = await prisma.offerLetter.create({
       data: { candidateName, candidateEmail, role, salary }
     });
 
+    // Return the HTML directly so frontend can display/print it
     res.json({
       offer,
-      message: 'Offer letter sent successfully',
-      previewUrl: nodemailer.getTestMessageUrl(info) // URL to view the fake email
+      message: 'Offer letter generated successfully',
+      offerHtml
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to send offer letter' });
+    res.status(500).json({ error: 'Failed to generate offer letter' });
   }
 });
 
@@ -458,23 +447,52 @@ app.get('*', (req, res) => {
 
 async function seedDatabase() {
   try {
+    // Ensure Admin exists
+    let admin = await prisma.user.findUnique({ where: { email: 'Outvoxsolution' } });
+    if (!admin) {
+      await prisma.user.create({
+        data: {
+          email: 'Outvoxsolution',
+          password: 'Preetham@22',
+          name: 'Preetham',
+          role: 'ADMIN'
+        }
+      });
+    }
+
     const count = await prisma.employee.count();
-    if (count > 0) return; // Skip seeding if data already exists
-    
-    const depts = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
-  for(let i = 1; i <= 150; i++) {
-    await prisma.employee.create({
-      data: {
-        empId: `EMP${i.toString().padStart(3, '0')}`,
-        fullName: `Employee ${i}`,
-        email: `emp${i}@outvox.com`,
-        department: depts[i % depts.length],
-        designation: 'Staff',
-        joiningDate: new Date(),
-        status: 'Active'
+    if (count === 0) {
+      const depts = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
+      for(let i = 1; i <= 150; i++) {
+        await prisma.employee.create({
+          data: {
+            empId: `EMP${i.toString().padStart(3, '0')}`,
+            fullName: `Employee ${i}`,
+            email: `emp${i}@outvox.com`,
+            department: depts[i % depts.length],
+            designation: 'Staff',
+            joiningDate: new Date(),
+            status: 'Active'
+          }
+        });
       }
-    });
-  }
+    }
+    
+    // Ensure all employees have a User record for login
+    const employees = await prisma.employee.findMany();
+    for (const emp of employees) {
+      const user = await prisma.user.findUnique({ where: { email: emp.email } });
+      if (!user) {
+        await prisma.user.create({
+          data: {
+            email: emp.email,
+            password: 'Employee@123',
+            name: emp.fullName,
+            role: 'EMPLOYEE'
+          }
+        });
+      }
+    }
   } catch (err) {
     console.error("Seeding error:", err);
   }
