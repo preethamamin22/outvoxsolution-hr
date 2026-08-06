@@ -129,6 +129,29 @@
   object-fit: cover;
   border: 2px solid var(--primary);
   padding: 2px;
+  display: block;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.avatar-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.profile-dropdown:hover .avatar-hover-overlay {
+  opacity: 1;
 }
 
 .mobile-menu-btn {

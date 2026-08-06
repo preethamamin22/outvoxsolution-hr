@@ -39,7 +39,7 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
     const token = jwt.sign({ userId: admin.id, role: 'ADMIN' }, JWT_SECRET, { expiresIn: '24h' });
-    return res.json({ token, user: { name: admin.name, username: admin.email, role: 'ADMIN' } });
+    return res.json({ token, user: { name: admin.name, username: admin.email, role: 'ADMIN', avatar: admin.avatar } });
   }
 
   // Check DB for any user (employees)
@@ -49,13 +49,58 @@ app.post('/api/auth/login', async (req, res) => {
       const employee = await prisma.employee.findUnique({ where: { email } });
       if (employee) {
         const token = jwt.sign({ userId: employee.id, role: 'AGENT' }, JWT_SECRET, { expiresIn: '24h' });
-        return res.json({ token, user: { id: employee.id, name: employee.fullName, username: employee.email, role: 'AGENT' } });
+        return res.json({ token, user: { id: employee.id, name: employee.fullName, username: employee.email, role: 'AGENT', avatar: employee.avatar } });
       }
     }
   }
 
   // Reject any other credentials
   return res.status(401).json({ error: 'Invalid username or password' });
+});
+
+// Update Profile (including avatar)
+app.put('/api/user/profile', async (req, res) => {
+  try {
+    const { email, name, avatar } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      const updatedUser = await prisma.user.update({
+        where: { email },
+        data: { name, avatar }
+      });
+
+      if (user.role === 'EMPLOYEE') {
+        await prisma.employee.update({
+          where: { email },
+          data: { fullName: name, avatar }
+        });
+      }
+      return res.json({ name: updatedUser.name, username: updatedUser.email, role: user.role, avatar: updatedUser.avatar });
+    }
+
+    const employee = await prisma.employee.findUnique({ where: { email } });
+    if (employee) {
+      const updatedEmployee = await prisma.employee.update({
+        where: { email },
+        data: { fullName: name, avatar }
+      });
+      // also update user table if user exists
+      const associatedUser = await prisma.user.findUnique({ where: { email } });
+      if (associatedUser) {
+        await prisma.user.update({
+          where: { email },
+          data: { name, avatar }
+        });
+      }
+      return res.json({ id: updatedEmployee.id, name: updatedEmployee.fullName, username: updatedEmployee.email, role: 'AGENT', avatar: updatedEmployee.avatar });
+    }
+
+    res.status(404).json({ error: 'User not found' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
 });
 
 // --- Dashboard Routes ---

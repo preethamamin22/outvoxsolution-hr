@@ -553,3 +553,7 @@
     align-items: flex-start;
   }
 }
+
+.agent-avatar-wrapper:hover .avatar-hover-overlay {
+  opacity: 1 !important;
+}

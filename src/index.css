@@ -26,6 +26,77 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+body.light-theme {
+  --bg-main: #F3F4F6;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --border-glass-strong: rgba(0, 0, 0, 0.12);
+  
+  --text-main: #1F2937;
+  --text-muted: #6B7280;
+  
+  --shadow-glass: 0 8px 32px 0 rgba(31, 41, 55, 0.04);
+}
+
+body.light-theme .glass-panel {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .topbar {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .nav-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.light-theme .kpi-card, 
+body.light-theme .glass-card, 
+body.light-theme .chart-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+body.light-theme input, 
+body.light-theme textarea, 
+body.light-theme select {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #1F2937 !important;
+}
+
+body.light-theme input:focus, 
+body.light-theme textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1) !important;
+}
+
+body.light-theme .search-container {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .search-shortcut {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+}
+
+body.light-theme .update-item,
+body.light-theme .task-item {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+body.light-theme .update-item:hover,
+body.light-theme .task-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
 * {
   margin: 0;
   padding: 0;

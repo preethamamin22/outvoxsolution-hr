@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Clock, MessageSquare, LogIn, LogOut, Edit2, X, Save, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { CheckCircle2, Clock, MessageSquare, LogIn, LogOut, Edit2, X, Save, User, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './AgentProfile.css';
 
 function AgentProfile() {
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,7 +24,56 @@ function AgentProfile() {
       return;
     }
     fetchProfile(user.id);
+
+    const handleProfileUpdate = () => {
+      const updatedUser = JSON.parse(localStorage.getItem('user'));
+      if (updatedUser && updatedUser.id) {
+        fetchProfile(updatedUser.id);
+      }
+    };
+    window.addEventListener('userProfileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('userProfileUpdated', handleProfileUpdate);
   }, [navigate]);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result;
+
+      try {
+        const res = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: profile.email,
+            name: profile.fullName,
+            avatar: base64String
+          })
+        });
+
+        if (res.ok) {
+          const updatedUser = await res.json();
+          setProfile({ ...profile, avatar: updatedUser.avatar });
+          
+          const userObj = JSON.parse(localStorage.getItem('user') || '{}');
+          userObj.avatar = updatedUser.avatar;
+          localStorage.setItem('user', JSON.stringify(userObj));
+          
+          window.dispatchEvent(new Event('userProfileUpdated'));
+        }
+      } catch (err) {
+        console.error('Failed to upload avatar', err);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const fetchProfile = async (id) => {
     try {
@@ -153,7 +203,33 @@ function AgentProfile() {
       {/* Hero Profile Card */}
       <div className="agent-hero glass-card">
         <div className="agent-hero-left">
-          <div className="agent-avatar">{initials}</div>
+          <div className="agent-avatar-wrapper" onClick={handleAvatarClick} title="Click to change profile picture" style={{ cursor: 'pointer', position: 'relative', width: '64px', height: '64px', flexShrink: 0 }}>
+            {profile.avatar ? (
+              <img src={profile.avatar} alt="Profile" className="agent-avatar" style={{ objectFit: 'cover', width: '100%', height: '100%', borderRadius: '50%' }} />
+            ) : (
+              <div className="agent-avatar" style={{ margin: 0 }}>{initials}</div>
+            )}
+            <div className="avatar-hover-overlay" style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.4)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justify-content: 'center',
+              opacity: 0,
+              transition: 'opacity 0.2s',
+            }}>
+              <Camera size={18} color="white" />
+            </div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleAvatarChange} 
+              style={{ display: 'none' }} 
+              accept="image/*"
+            />
+          </div>
           <div className="agent-info">
             <h2 className="agent-name">{profile.fullName}</h2>
             <p className="agent-dept">{profile.designation} &bull; {profile.department}</p>
