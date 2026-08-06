@@ -7,8 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "postinstall": "npm exec -- prisma generate",
-    "db:push": "npm exec -- prisma db push"
+    "postinstall": "chmod +x node_modules/.bin/prisma && npx prisma generate",
+    "db:push": "chmod +x node_modules/.bin/prisma && npx prisma db push"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
