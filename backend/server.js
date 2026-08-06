@@ -153,6 +153,36 @@ app.get('/api/dashboard/charts', async (req, res) => {
   });
 });
 
+app.get('/api/dashboard/activities', async (req, res) => {
+  try {
+    const recentUpdates = await prisma.dailyUpdate.findMany({
+      take: 5,
+      orderBy: { date: 'desc' },
+      include: { employee: true }
+    });
+
+    const recentOffers = await prisma.offerLetter.findMany({
+      take: 5,
+      orderBy: { sentAt: 'desc' }
+    });
+
+    const recentClockIns = await prisma.attendanceRecord.findMany({
+      take: 5,
+      orderBy: { clockIn: 'desc' },
+      include: { employee: true }
+    });
+
+    res.json({
+      recentUpdates,
+      recentOffers,
+      recentClockIns
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch dashboard activities' });
+  }
+});
+
 // --- Employee Routes ---
 app.get('/api/employees', async (req, res) => {
   try {
