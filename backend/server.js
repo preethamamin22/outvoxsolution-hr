@@ -106,26 +106,55 @@ app.put('/api/user/profile', async (req, res) => {
 // --- Dashboard Routes ---
 app.get('/api/dashboard/kpis', async (req, res) => {
   try {
-    // Real implementation would query DB. Here we provide mock data with realistic structure
-    const totalEmployees = await prisma.employee.count();
-    
-    // If DB is empty, seed it with dummy data quickly
-    if (totalEmployees === 0) {
-      await seedDatabase();
-    }
-    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const count = await prisma.employee.count();
     const active = await prisma.employee.count({ where: { status: 'Active' } });
+    const onLeave = await prisma.employee.count({ where: { status: 'On Leave' } });
+    
+    // Count active clock-ins for today
+    const presentToday = await prisma.attendanceRecord.count({
+      where: {
+        date: { gte: today },
+        status: 'Present'
+      }
+    });
+
+    const absent = Math.max(0, active - presentToday - onLeave);
+    
+    // Late check-ins (clocked in after 10:00 AM)
+    const records = await prisma.attendanceRecord.findMany({
+      where: { date: { gte: today } }
+    });
+    let lateCheckins = 0;
+    for (const r of records) {
+      if (r.clockIn) {
+        const time = new Date(r.clockIn);
+        if (time.getHours() >= 10) {
+          lateCheckins++;
+        }
+      }
+    }
+
+    // New joiners this month
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const newJoiners = await prisma.employee.count({
+      where: { joiningDate: { gte: firstDayOfMonth } }
+    });
+
+    const openPositions = await prisma.offerLetter.count({ where: { status: 'Sent' } });
+    const pendingApprovals = await prisma.lead.count({ where: { status: 'New' } });
 
     res.json({
       totalEmployees: count,
-      presentToday: Math.floor(count * 0.95), // 95% present
-      absent: Math.floor(count * 0.05), // 5% absent
-      lateCheckins: 12,
-      newJoiners: 5,
-      onLeave: 4,
-      openPositions: 8,
-      pendingApprovals: 15
+      presentToday,
+      absent,
+      lateCheckins,
+      newJoiners,
+      onLeave,
+      openPositions,
+      pendingApprovals
     });
   } catch (error) {
     console.error(error);
@@ -535,38 +564,27 @@ async function seedDatabase() {
       });
     }
 
-    const count = await prisma.employee.count();
-    if (count === 0) {
-      const depts = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
-      for(let i = 1; i <= 150; i++) {
-        await prisma.employee.create({
-          data: {
-            empId: `EMP${i.toString().padStart(3, '0')}`,
-            fullName: `Employee ${i}`,
-            email: `emp${i}@outvox.com`,
-            department: depts[i % depts.length],
-            designation: 'Staff',
-            joiningDate: new Date(),
-            status: 'Active'
-          }
-        });
-      }
-    }
+    // Clean up dummy seeded data if it exists
+    const dummyEmployees = await prisma.employee.findMany({
+      where: { email: { endsWith: '@outvox.com' } }
+    });
     
-    // Ensure all employees have a User record for login
-    const employees = await prisma.employee.findMany();
-    for (const emp of employees) {
-      const user = await prisma.user.findUnique({ where: { email: emp.email } });
-      if (!user) {
-        await prisma.user.create({
-          data: {
-            email: emp.email,
-            password: 'Employee@123',
-            name: emp.fullName,
-            role: 'EMPLOYEE'
-          }
-        });
-      }
+    if (dummyEmployees.length > 0) {
+      const dummyEmpIds = dummyEmployees.map(e => e.id);
+      const dummyEmails = dummyEmployees.map(e => e.email);
+      
+      // Delete dependent records first to avoid foreign key constraint errors
+      await prisma.task.deleteMany({ where: { assigneeId: { in: dummyEmpIds } } });
+      await prisma.attendanceRecord.deleteMany({ where: { employeeId: { in: dummyEmpIds } } });
+      await prisma.dailyUpdate.deleteMany({ where: { employeeId: { in: dummyEmpIds } } });
+      await prisma.lead.deleteMany({ where: { assignedTo: { in: dummyEmpIds } } });
+      
+      // Delete logins
+      await prisma.user.deleteMany({ where: { email: { in: dummyEmails } } });
+      
+      // Delete employees
+      await prisma.employee.deleteMany({ where: { id: { in: dummyEmpIds } } });
+      console.log(`Cleaned up ${dummyEmployees.length} dummy employees and their associated records.`);
     }
   } catch (err) {
     console.error("Seeding error:", err);
