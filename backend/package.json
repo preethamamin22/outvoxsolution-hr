@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "postinstall": "npm exec -- prisma generate",
+    "db:push": "npm exec -- prisma db push"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
