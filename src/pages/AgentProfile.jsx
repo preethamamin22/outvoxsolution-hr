@@ -216,7 +216,7 @@ function AgentProfile() {
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
-              justify-content: 'center',
+              justifyContent: 'center',
               opacity: 0,
               transition: 'opacity 0.2s',
             }}>
