@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, CheckCircle2, XCircle, Clock, 
-  UserPlus, FileCheck, Search, Briefcase
+  UserPlus, FileCheck, Search, Briefcase, Link, Copy, Check
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -30,6 +30,18 @@ function Dashboard() {
   const [kpis, setKpis] = useState(null);
   const [charts, setCharts] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const loginUrl = window.location.origin + '/login';
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(loginUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,11 +75,44 @@ function Dashboard() {
       <div className="dashboard-header">
         <div>
           <h2>Dashboard Overview</h2>
-          <p className="text-muted">Welcome back, here's what's happening today.</p>
+          <p className="text-muted">Welcome back, <strong style={{ color: 'var(--primary)' }}>{user?.name || 'Preetham'}</strong>. Here's what's happening today.</p>
         </div>
         <button className="btn btn-primary">Download Report</button>
       </div>
 
+      {/* Agent Login Link Share Banner */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '1rem',
+        padding: '1rem 1.5rem',
+        background: 'linear-gradient(135deg, rgba(79,70,229,0.15), rgba(6,182,212,0.1))',
+        border: '1px solid rgba(79,70,229,0.3)',
+        borderRadius: '12px',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: '200px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #4F46E5, #06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Link size={18} color="white" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Agent Login Link — Share this with your employees</p>
+            <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: 'var(--primary)', wordBreak: 'break-all' }}>{loginUrl}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleCopyLink}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.5rem',
+            padding: '0.6rem 1.2rem',
+            background: copied ? 'rgba(34,197,94,0.2)' : 'rgba(79,70,229,0.25)',
+            border: copied ? '1px solid rgba(34,197,94,0.5)' : '1px solid rgba(79,70,229,0.5)',
+            color: copied ? 'var(--success)' : 'white',
+            borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem',
+            fontWeight: '600', transition: 'all 0.3s ease', whiteSpace: 'nowrap'
+          }}
+        >
+          {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy Link</>}
+        </button>
+      </div>
       <div className="kpi-grid">
         <KpiCard icon={Users} title="Total Employees" value={kpis?.totalEmployees || 0} trend="12% vs last month" trendUp={true} color="#4F46E5" />
         <KpiCard icon={CheckCircle2} title="Present Today" value={kpis?.presentToday || 0} trend="3% vs yesterday" trendUp={true} color="#22C55E" />

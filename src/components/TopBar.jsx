@@ -1,7 +1,11 @@
-import { Bell, Search, Moon, Sun, MessageSquare, Menu } from 'lucide-react';
+import { Bell, Search, Moon, MessageSquare, Menu } from 'lucide-react';
 import './TopBar.css';
 
 function TopBar({ onMenuClick }) {
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const displayName = user?.name || 'Preetham';
+  const displayRole = user?.role === 'ADMIN' ? 'Admin' : user?.role === 'AGENT' ? 'Agent' : 'Admin';
   return (
     <header className="topbar glass-panel">
       <div className="search-container">
@@ -34,8 +38,8 @@ function TopBar({ onMenuClick }) {
         
         <div className="profile-dropdown">
           <div className="profile-info">
-            <span className="profile-name">Alex Morgan</span>
-            <span className="profile-role">HR Director</span>
+            <span className="profile-name">{displayName}</span>
+            <span className="profile-role">{displayRole}</span>
           </div>
           <img 
             src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" 
