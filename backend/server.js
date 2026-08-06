@@ -531,6 +531,42 @@ app.post('/api/leads', async (req, res) => {
   }
 });
 
+app.post('/api/leads/bulk', async (req, res) => {
+  try {
+    const { leads } = req.body;
+    if (!Array.isArray(leads)) {
+      return res.status(400).json({ error: 'Leads must be an array' });
+    }
+
+    const createdLeads = [];
+    for (const lead of leads) {
+      const { name, phone, email, assignedTo } = lead;
+      if (!name || !phone || !assignedTo) {
+        continue; // skip invalid rows
+      }
+      try {
+        const newLead = await prisma.lead.create({
+          data: {
+            name: String(name).trim(),
+            phone: String(phone).trim(),
+            email: email ? String(email).trim() : null,
+            assignedTo: parseInt(assignedTo),
+            status: 'New'
+          },
+          include: { employee: true }
+        });
+        createdLeads.push(newLead);
+      } catch (err) {
+        console.error('Failed to insert lead row:', lead, err);
+      }
+    }
+    res.json(createdLeads);
+  } catch (error) {
+    console.error('Bulk lead creation error:', error);
+    res.status(500).json({ error: 'Failed to bulk create leads' });
+  }
+});
+
 app.put('/api/leads/:id', async (req, res) => {
   try {
     const { status, notes } = req.body;
