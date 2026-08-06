@@ -1,13 +1,10 @@
 {
   "outputDirectory": "dist",
+  "buildCommand": "npm run build",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/backend/server.js"
-    },
-    {
       "source": "/(.*)",
-      "destination": "/$1"
+      "destination": "/index.html"
     }
   ]
 }

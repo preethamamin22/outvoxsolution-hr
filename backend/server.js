@@ -14,11 +14,11 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 // Serve static files from the React frontend build folder
-app.use(express.static(path.join(__dirname, '../build')));
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // Root route to prevent "Cannot GET /"
 app.get('/', (req, res) => {
@@ -442,7 +442,7 @@ app.put('/api/leads/:id', async (req, res) => {
 
 // Fallback to React index.html for all non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../build/index.html'));
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 async function seedDatabase() {
